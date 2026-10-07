@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>College of Nursing Female Nawabshah</title>
+    <meta name="theme-color" content="#0a3d6b" />
+    <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+    <div class="app-wrapper">
+        <header class="app-header">
+            <img src="assets/logo.jpeg" alt="Logo" class="logo" />
+            <div>
+                <h1 style="margin:0; font-size:1.5rem;">College of Nursing</h1>
+                <p style="margin:0; font-size:0.8rem; opacity:0.8;">Female Nawabshah - Examination System</p>
+            </div>
+        </header>
+
+        <!-- LOGIN SECTION -->
+        <div id="loginSection" class="card login-card">
+            <h2>Student Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="button" id="showRegisterBtn" class="btn btn-secondary">📝 Register (New Student)</button>
+            </form>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+
+        <!-- REGISTER SECTION -->
+        <div id="registerSection" class="card register-card" style="display:none;">
+            <h2>📝 New Student Registration</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName">Student Name *</label>
+                    <input type="text" id="regName" placeholder="Enter your full name" required />
+                </div>
+                <div class="form-group">
+                    <label for="regFather">Father Name *</label>
+                    <input type="text" id="regFather" placeholder="Enter father's name" required />
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Phone Number *</label>
+                    <input type="tel" id="regPhone" placeholder="03XXXXXXXXX" required />
+                </div>
+                <div class="form-group">
+                    <label for="regTid">JazzCash TID (Transaction ID) *</label>
+                    <input type="text" id="regTid" placeholder="Enter JazzCash TID" required />
+                </div>
+                
+                <div class="payment-info">
+                    <h4>💰 Payment Information</h4>
+                    <p>Exam Fee: <strong>Rs. 200</strong></p>
+                    <p>JazzCash Number: <strong>03234296569</strong></p>
+                    <p style="font-size:0.85rem; margin-top:10px;">
+                        ⚠️ Send Rs. 200 to the above JazzCash number and enter the TID (Transaction ID) in the form.
+                    </p>
+                </div>
+                
+                <button type="submit" class="btn btn-success">✅ Register</button>
+                <button type="button" id="backToLoginBtn" class="btn btn-secondary">⬅ Back to Login</button>
+            </form>
+            <div id="registerError" class="error-msg"></div>
+        </div>
+
+        <!-- INSTRUCTIONS SECTION -->
+        <div id="instructionsSection" class="card instructions-card" style="display:none;">
+            <h2>📋 Exam Instructions</h2>
+            <div id="welcomeMessage" style="font-size:1.3rem; color:#0a3d6b; margin-bottom:15px; font-weight:bold;"></div>
+            <div id="testInfo" style="background:#f0f7ff; padding:12px; border-radius:10px; margin-bottom:15px; font-size:0.95rem; color:#0a3d6b;"></div>
+            <div class="instructions-content">
+                <ul>
+                    <li><strong>Total Questions:</strong> <span id="totalQuestionsDisplay">20</span> Multiple Choice Questions</li>
+                    <li><strong>Time Limit:</strong> <span id="timeLimitDisplay">25</span> Minutes</li>
+                    <li><strong>Passing Score:</strong> 50%</li>
+                    <li><strong>Rules:</strong></li>
+                    <ul>
+                        <li>Read each question carefully</li>
+                        <li>Select the best answer</li>
+                        <li>Auto-submit when time expires</li>
+                        <li>No external help or cheating</li>
+                    </ul>
+                </ul>
+                <button id="startExamBtn" class="btn btn-success" style="width:100%; margin-top:15px;">🚀 Start Exam</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+            }
+        }
+    </script>
+    <script type="module" src="assets/app.js"></script>
+</body>
+</html>

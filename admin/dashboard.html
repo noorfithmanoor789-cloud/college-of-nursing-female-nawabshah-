@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard - College of Nursing</title>
+    <meta name="theme-color" content="#0a3d6b" />
+    <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+    <div class="app-wrapper">
+        <header class="app-header" style="display:flex; align-items:center; gap:20px;">
+            <img src="../assets/logo.jpeg" alt="Logo" class="logo" />
+            <div>
+                <h1 style="margin:0; font-size:1.5rem;">College of Nursing Female Nawabshah</h1>
+                <p style="margin:0; font-size:0.8rem; opacity:0.8;">Admin Dashboard</p>
+            </div>
+            <button id="adminLogoutBtn" class="btn btn-secondary" style="margin-left:auto; width:auto;">🚪 Logout</button>
+        </header>
+
+        <main class="admin-container">
+            <!-- TEST MANAGEMENT -->
+            <div class="card" style="margin-bottom:20px;">
+                <h3>📋 Test Management</h3>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center; padding:15px 0;">
+                    <div style="flex:1; min-width:200px;">
+                        <label style="font-weight:600; display:block; margin-bottom:5px;">Select Active Test:</label>
+                        <select id="activeTestSelect" style="width:100%; padding:10px; border:2px solid #dce3ef; border-radius:10px; font-size:1rem;"></select>
+                    </div>
+                    <button id="updateTestBtn" class="btn btn-primary" style="width:auto;">🔄 Switch Test</button>
+                    <span id="testStatus" style="padding:8px 15px; border-radius:20px; background:#d4edda; color:#155724; font-weight:600;">✅ Loading...</span>
+                </div>
+            </div>
+
+            <!-- REGISTRATION REQUESTS -->
+            <div class="card" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3>📝 Registration Requests</h3>
+                    <button id="refreshRegBtn" class="btn btn-primary" style="width:auto; padding:8px 16px;">🔄 Refresh</button>
+                </div>
+                <div id="registrationCount" style="margin:10px 0; padding:10px; border-radius:8px; font-weight:bold; background:#fff3cd; color:#856404;">
+                    Loading...
+                </div>
+                <div style="overflow-x:auto;">
+                    <table id="registrationsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student Name</th>
+                                <th>Father Name</th>
+                                <th>Phone</th>
+                                <th>TID</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrationsBody">
+                            <tr><td colspan="7" style="text-align:center; padding:20px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- EXAM RESULTS -->
+            <div class="card">
+                <h3>📊 Exam Results</h3>
+                
+                <div class="admin-controls" style="margin-top:15px;">
+                    <input type="text" id="searchInput" placeholder="🔍 Search student..." />
+                    <select id="testFilterSelect"><option value="all">📊 All Tests</option></select>
+                    <select id="sortSelect">
+                        <option value="latest">Latest Submission</option>
+                        <option value="highest">Highest Score</option>
+                        <option value="lowest">Lowest Score</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-primary" style="width:auto;">🔄 Refresh</button>
+                </div>
+
+                <div id="resultCount" style="margin:10px 0; padding:10px; border-radius:8px; font-weight:bold; background:#d4edda; color:#155724;">Loading results...</div>
+
+                <div style="overflow-x:auto;">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student Name</th>
+                                <th>Username</th>
+                                <th>Test</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"><tr><td colspan="9" style="text-align:center; padding:30px;">No results found</td></tr></tbody>
+                    </table>
+                </div>
+
+                <div id="testLegend" style="margin-top:20px; padding:15px; background:#f8f9fa; border-radius:10px; border:1px solid #dee2e6;">
+                    <p style="margin:0; font-size:0.9rem; color:#6c757d;"><strong>Test Legend:</strong> Loading...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+            }
+        }
+    </script>
+    <script type="module" src="../assets/app.js"></script>
+</body>
+</html>
