@@ -40,8 +40,6 @@ const registerForm = document.getElementById('registerForm');
 const loginError = document.getElementById('loginError');
 const registerError = document.getElementById('registerError');
 const startExamBtn = document.getElementById('startExamBtn');
-const showRegisterBtn = document.getElementById('showRegisterBtn');
-const backToLoginBtn = document.getElementById('backToLoginBtn');
 
 // ==================== INITIALIZE ====================
 (async () => {
@@ -53,7 +51,6 @@ const backToLoginBtn = document.getElementById('backToLoginBtn');
         userAnswers = new Array(EXAM_QUESTIONS.length).fill(null);
         await loadRegisteredStudents();
         console.log('📝 Loaded Test:', CURRENT_TEST.name);
-        console.log('👥 Registered Students:', REGISTERED_STUDENTS.length);
     } catch (error) {
         console.error('❌ Init error:', error);
         ACTIVE_TEST_ID = 'test1';
@@ -72,9 +69,9 @@ async function loadRegisteredStudents() {
         querySnapshot.forEach((doc) => {
             REGISTERED_STUDENTS.push({ id: doc.id, ...doc.data() });
         });
-        console.log('✅ Registered students loaded:', REGISTERED_STUDENTS.length);
+        console.log('✅ Registered students:', REGISTERED_STUDENTS.length);
     } catch (error) {
-        console.error('Error loading registered students:', error);
+        console.error('Error:', error);
     }
 }
 
@@ -95,33 +92,80 @@ function updateInstructionsWithTestInfo() {
     if (timeLimitDisplay) timeLimitDisplay.textContent = CURRENT_TEST.timeLimit;
 }
 
-// ==================== SHOW REGISTER FORM ====================
-if (showRegisterBtn) {
-    showRegisterBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (loginSection) loginSection.style.display = 'none';
-        if (registerSection) registerSection.style.display = 'block';
-    });
+// ============================================================
+// 🔥 REGISTER BUTTON - WORKING VERSION
+// ============================================================
+// Yeh code page load hone ke baad turant chalta hai
+// Isliye button click par instantly kaam karega
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM Loaded - Register button ready');
+    
+    // Show Register Button
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    if (showRegisterBtn) {
+        showRegisterBtn.onclick = function(e) {
+            e.preventDefault();
+            console.log('📝 Register button clicked');
+            const loginSec = document.getElementById('loginSection');
+            const regSec = document.getElementById('registerSection');
+            if (loginSec) loginSec.style.display = 'none';
+            if (regSec) regSec.style.display = 'block';
+        };
+        console.log('✅ Register button listener attached');
+    } else {
+        console.warn('⚠️ showRegisterBtn not found');
+    }
+    
+    // Back to Login Button
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    if (backToLoginBtn) {
+        backToLoginBtn.onclick = function(e) {
+            e.preventDefault();
+            console.log('⬅ Back to login clicked');
+            const loginSec = document.getElementById('loginSection');
+            const regSec = document.getElementById('registerSection');
+            if (regSec) regSec.style.display = 'none';
+            if (loginSec) loginSec.style.display = 'block';
+        };
+    }
+});
+
+// Also attach directly (in case DOMContentLoaded already fired)
+if (document.readyState === 'loading') {
+    // DOM still loading - DOMContentLoaded will fire
+    console.log('⏳ DOM still loading');
+} else {
+    // DOM already loaded
+    console.log('✅ DOM already loaded - attaching now');
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    if (showRegisterBtn) {
+        showRegisterBtn.onclick = function(e) {
+            e.preventDefault();
+            console.log('📝 Register clicked (direct)');
+            const loginSec = document.getElementById('loginSection');
+            const regSec = document.getElementById('registerSection');
+            if (loginSec) loginSec.style.display = 'none';
+            if (regSec) regSec.style.display = 'block';
+        };
+    }
+    
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    if (backToLoginBtn) {
+        backToLoginBtn.onclick = function(e) {
+            e.preventDefault();
+            const loginSec = document.getElementById('loginSection');
+            const regSec = document.getElementById('registerSection');
+            if (regSec) regSec.style.display = 'none';
+            if (loginSec) loginSec.style.display = 'block';
+        };
+    }
 }
 
-// ==================== BACK TO LOGIN ====================
-if (backToLoginBtn) {
-    backToLoginBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (registerSection) registerSection.style.display = 'none';
-        if (loginSection) loginSection.style.display = 'block';
-    });
-}
-
 // ============================================================
-// 🔥 LOGIN WITH ADMIN APPROVAL CHECK
+// 🔥 LOGIN FUNCTION
 // ============================================================
-// Rules:
-// 1. Student must have registered (in registered-students)
-// 2. Student status must be "approved" (admin approved)
-// 3. Only then login allowed
-// ============================================================
-
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -130,14 +174,14 @@ if (loginForm) {
 
         console.log('🔐 Login attempt:', username);
 
-        // ==================== ADMIN LOGIN ====================
+        // Admin Login
         if (username === 'admin' && password === 'admin123') {
             localStorage.setItem('adminLoggedIn', 'true');
             window.location.href = 'admin/dashboard.html';
             return;
         }
 
-        // ==================== CHECK 1: IS STUDENT REGISTERED? ====================
+        // Check if registered
         const registeredStudent = REGISTERED_STUDENTS.find(s => 
             s.username === username && s.password === password
         );
@@ -148,41 +192,34 @@ if (loginForm) {
                 Aap ne abhi register nahi kiya. Pehle "Register" button par click karke form fill karein.
             `;
             loginError.style.display = 'block';
-            console.log('❌ Not registered:', username);
             return;
         }
 
-        // ==================== CHECK 2: IS ADMIN APPROVED? ====================
+        // Check approval status
         if (registeredStudent.status === 'pending') {
             loginError.innerHTML = `
                 ⏳ <strong>Waiting for Admin Approval!</strong><br>
-                Aapka registration admin ke paas hai. Approval ke baad hi login ho sakta hai.<br>
-                <small>Please wait for admin to verify your payment and approve.</small>
+                Aapka registration admin ke paas hai. Approval ke baad hi login ho sakta hai.
             `;
             loginError.style.display = 'block';
-            console.log('⏳ Pending approval:', username);
             return;
         }
 
         if (registeredStudent.status === 'rejected') {
             loginError.innerHTML = `
                 ❌ <strong>Registration Rejected!</strong><br>
-                Aapka registration admin ne reject kar diya hai.<br>
-                <small>Please contact admin for more information.</small>
+                Aapka registration admin ne reject kar diya hai.
             `;
             loginError.style.display = 'block';
-            console.log('❌ Rejected:', username);
             return;
         }
 
-        // ==================== CHECK 3: VERIFY CREDENTIALS ====================
+        // Status approved
         if (registeredStudent.status === 'approved') {
-            // Find student in pre-registered list
             let student = EXAM_STUDENTS.find(s => 
                 s.username === username && s.password === password
             );
 
-            // If not found, use registered student data
             if (!student) {
                 student = {
                     name: registeredStudent.name,
@@ -191,10 +228,9 @@ if (loginForm) {
                 };
             }
 
-            console.log('✅ Approved student login:', student.name);
             await handleSuccessfulLogin(student);
         } else {
-            loginError.textContent = 'Invalid username or password. Please try again.';
+            loginError.textContent = 'Invalid username or password.';
             loginError.style.display = 'block';
         }
     });
@@ -226,16 +262,8 @@ async function handleSuccessfulLogin(student) {
 }
 
 // ============================================================
-// 🔥 REGISTRATION FORM - AUTO MATCH + PENDING STATUS
+// 🔥 REGISTER FORM SUBMIT
 // ============================================================
-// Logic:
-// 1. Student form fill kare (Name + Father Name)
-// 2. System checks if Name matches pre-registered list
-// 3. If MATCH → Auto-assign username/password, status = "pending"
-// 4. If NO MATCH → Add as new student, status = "pending"
-// 5. Admin approval required in both cases
-// ============================================================
-
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -247,7 +275,6 @@ if (registerForm) {
         
         console.log('📝 Registration:', studentName);
         
-        // Validation
         if (!studentName || !fatherName || !phone || !tid) {
             registerError.textContent = 'Please fill all fields!';
             registerError.style.display = 'block';
@@ -282,19 +309,13 @@ if (registerForm) {
             btn.textContent = '⏳ Submitting...';
             btn.disabled = true;
 
-            // ============================================================
-            // STEP 1: Check if student matches pre-registered list
-            // ============================================================
+            // Check if matches pre-registered
             const matchedStudent = EXAM_STUDENTS.find(s => 
                 s.name.toLowerCase() === studentName.toLowerCase()
             );
 
             if (matchedStudent) {
-                // ✅ MATCH FOUND - Pre-registered student
-                // Auto-assign existing username/password
-                // Status = PENDING (Admin approval required)
-                console.log('✅ Matched with pre-registered:', matchedStudent.name);
-                
+                // Existing student - auto-assign credentials, but PENDING approval
                 await addDoc(collection(db, 'registered-students'), {
                     name: matchedStudent.name,
                     fatherName: fatherName,
@@ -304,56 +325,43 @@ if (registerForm) {
                     password: matchedStudent.password,
                     jazzCashNumber: COLLEGE_INFO.jazzCash,
                     examFee: COLLEGE_INFO.examFee,
-                    status: 'pending', // ⚠️ PENDING until admin approves
+                    status: 'pending',
                     type: 'existing',
                     registeredAt: new Date().toISOString(),
-                    registeredTimestamp: serverTimestamp(),
-                    approvedAt: null,
-                    approvedBy: null
+                    registeredTimestamp: serverTimestamp()
                 });
                 
-                alert(`✅ Registration Submitted!\n\nName: ${matchedStudent.name}\nUsername: ${matchedStudent.username}\nPassword: ${matchedStudent.password}\n\n⏳ Please wait for ADMIN APPROVAL.\n\nAdmin will verify your payment (Rs. ${COLLEGE_INFO.examFee}) and approve your account.\nAfter approval, you can login.`);
-                
-                await loadRegisteredStudents();
-                
-                registerForm.reset();
-                if (registerSection) registerSection.style.display = 'none';
-                if (loginSection) loginSection.style.display = 'block';
+                alert(`✅ Registration Submitted!\n\nName: ${matchedStudent.name}\nUsername: ${matchedStudent.username}\nPassword: ${matchedStudent.password}\n\n⏳ Please wait for ADMIN APPROVAL.\nAdmin will verify your payment and approve your account.`);
                 
             } else {
-                // ❌ NO MATCH - New student
-                // Add with pending status
-                console.log('⚠️ New student - Admin approval required');
-                
+                // New student
                 await addDoc(collection(db, 'registered-students'), {
                     name: studentName,
                     fatherName: fatherName,
                     phone: phone,
                     tid: tid,
-                    username: `pending_${Date.now()}`, // Temporary
+                    username: `pending_${Date.now()}`,
                     password: `pending_${Date.now()}`,
                     jazzCashNumber: COLLEGE_INFO.jazzCash,
                     examFee: COLLEGE_INFO.examFee,
                     status: 'pending',
                     type: 'new',
                     registeredAt: new Date().toISOString(),
-                    registeredTimestamp: serverTimestamp(),
-                    approvedAt: null,
-                    approvedBy: null
+                    registeredTimestamp: serverTimestamp()
                 });
                 
-                alert(`✅ Registration Submitted!\n\nName: ${studentName}\nFee: Rs. ${COLLEGE_INFO.examFee}\nJazzCash: ${COLLEGE_INFO.jazzCash}\nTID: ${tid}\n\n⏳ Please wait for ADMIN APPROVAL.\n\nAdmin will verify your payment and assign your username/password.`);
-                
-                await loadRegisteredStudents();
-                
-                registerForm.reset();
-                if (registerSection) registerSection.style.display = 'none';
-                if (loginSection) loginSection.style.display = 'block';
+                alert(`✅ Registration Submitted!\n\nName: ${studentName}\n\n⏳ Please wait for ADMIN APPROVAL.\nAdmin will assign your username/password.`);
             }
+            
+            await loadRegisteredStudents();
+            
+            registerForm.reset();
+            if (registerSection) registerSection.style.display = 'none';
+            if (loginSection) loginSection.style.display = 'block';
             
         } catch (error) {
             console.error('Error:', error);
-            registerError.textContent = 'Error submitting form. Please try again.';
+            registerError.textContent = 'Error submitting form.';
             registerError.style.display = 'block';
             
             const btn = registerForm.querySelector('button[type="submit"]');
@@ -562,9 +570,7 @@ if (window.location.pathname.includes('result.html')) {
     });
 }
 
-// ============================================================
-// 🔥 ADMIN DASHBOARD - APPROVAL SYSTEM
-// ============================================================
+// ==================== ADMIN DASHBOARD ====================
 if (window.location.pathname.includes('dashboard.html')) {
     const adminLoggedIn = localStorage.getItem('adminLoggedIn');
     if (!adminLoggedIn) {
@@ -768,7 +774,7 @@ function sortResults() {
 }
 
 // ============================================================
-// 🔥 ADMIN - LOAD REGISTRATION REQUESTS
+// ADMIN - REGISTRATION REQUESTS
 // ============================================================
 async function loadRegistrationRequests() {
     const tbody = document.getElementById('registrationsBody');
@@ -792,7 +798,7 @@ async function loadRegistrationRequests() {
             countMsg.innerHTML = `📋 Total: <strong>${allRegistrations.length}</strong> | ⏳ Pending: <strong style="color:#dc3545;">${pending}</strong> | ✅ Approved: <strong style="color:#28a745;">${approved}</strong>`;
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="8">Error loading</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">Error</td></tr>';
         console.error(error);
     }
 }
@@ -832,11 +838,8 @@ function displayRegistrations(registrations) {
     }).join('');
 }
 
-// ============================================================
-// 🔥 ADMIN - APPROVE STUDENT
-// ============================================================
 window.approveStudent = async function(regId) {
-    if (!confirm('Approve this student?\n\nThey will be able to login after approval.')) return;
+    if (!confirm('Approve this student?')) return;
     
     try {
         const reg = allRegistrations.find(r => r.id === regId);
@@ -845,14 +848,12 @@ window.approveStudent = async function(regId) {
         let username = reg.username;
         let password = reg.password;
         
-        // For completely new students, generate new credentials
         if (reg.type === 'new') {
             const approvedCount = allRegistrations.filter(r => r.status === 'approved').length;
             username = `student${NEXT_STUDENT_START + approvedCount}`;
             password = `${NEXT_STUDENT_START + approvedCount}`;
         }
         
-        // Update registration status
         const regRef = doc(db, 'registered-students', regId);
         await updateDoc(regRef, {
             status: 'approved',
@@ -862,20 +863,17 @@ window.approveStudent = async function(regId) {
             approvedBy: 'admin'
         });
         
-        alert(`✅ Student Approved!\n\nName: ${reg.name}\nUsername: ${username}\nPassword: ${password}\n\nStudent can now login.`);
+        alert(`✅ Approved!\n\nName: ${reg.name}\nUsername: ${username}\nPassword: ${password}`);
         
         await loadRegisteredStudents();
         await loadRegistrationRequests();
         
     } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error approving student');
+        alert('❌ Error');
     }
 };
 
-// ============================================================
-// 🔥 ADMIN - REJECT STUDENT
-// ============================================================
 window.rejectStudent = async function(regId) {
     if (!confirm('Reject this registration?')) return;
     
@@ -883,16 +881,15 @@ window.rejectStudent = async function(regId) {
         const regRef = doc(db, 'registered-students', regId);
         await updateDoc(regRef, {
             status: 'rejected',
-            rejectedAt: new Date().toISOString(),
-            rejectedBy: 'admin'
+            rejectedAt: new Date().toISOString()
         });
         
-        alert('❌ Registration Rejected');
+        alert('❌ Rejected');
         await loadRegistrationRequests();
         
     } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error rejecting');
+        alert('❌ Error');
     }
 };
 
