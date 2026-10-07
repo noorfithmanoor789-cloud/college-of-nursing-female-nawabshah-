@@ -1,7 +1,7 @@
 import { db } from './firebase.js';
 import { 
     collection, addDoc, getDocs, query, orderBy, serverTimestamp, 
-    doc, updateDoc, where 
+    doc, updateDoc 
 } from 'firebase/firestore';
 import { 
     EXAM_STUDENTS, 
@@ -39,6 +39,8 @@ const registerForm = document.getElementById('registerForm');
 const loginError = document.getElementById('loginError');
 const registerError = document.getElementById('registerError');
 const startExamBtn = document.getElementById('startExamBtn');
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const backToLoginBtn = document.getElementById('backToLoginBtn');
 
 // ==================== INITIALIZE ====================
 (async () => {
@@ -48,12 +50,8 @@ const startExamBtn = document.getElementById('startExamBtn');
         EXAM_QUESTIONS = getCurrentTestQuestions();
         CURRENT_TEST = getCurrentTestConfig();
         userAnswers = new Array(EXAM_QUESTIONS.length).fill(null);
-        
-        // Load approved students
         await loadApprovedStudents();
-        
         console.log('📝 Loaded Test:', CURRENT_TEST.name);
-        console.log('👥 Approved Students:', APPROVED_STUDENTS.length);
     } catch (error) {
         console.error('❌ Init error:', error);
         ACTIVE_TEST_ID = 'test1';
@@ -63,7 +61,7 @@ const startExamBtn = document.getElementById('startExamBtn');
     }
 })();
 
-// ==================== LOAD APPROVED STUDENTS FROM FIREBASE ====================
+// ==================== LOAD APPROVED STUDENTS ====================
 async function loadApprovedStudents() {
     try {
         const q = query(collection(db, 'approved-students'), orderBy('approvedAt', 'desc'));
@@ -72,9 +70,9 @@ async function loadApprovedStudents() {
         querySnapshot.forEach((doc) => {
             APPROVED_STUDENTS.push({ id: doc.id, ...doc.data() });
         });
-        console.log('✅ Approved students loaded:', APPROVED_STUDENTS.length);
+        console.log('✅ Approved students:', APPROVED_STUDENTS.length);
     } catch (error) {
-        console.error('Error loading approved students:', error);
+        console.error('Error:', error);
     }
 }
 
@@ -89,12 +87,33 @@ function updateInstructionsWithTestInfo() {
             | <strong>Time:</strong> ${CURRENT_TEST.timeLimit} minutes
         `;
     }
-    
     const totalQuestionsDisplay = document.getElementById('totalQuestionsDisplay');
     if (totalQuestionsDisplay) totalQuestionsDisplay.textContent = CURRENT_TEST.totalQuestions;
-    
     const timeLimitDisplay = document.getElementById('timeLimitDisplay');
     if (timeLimitDisplay) timeLimitDisplay.textContent = CURRENT_TEST.timeLimit;
+}
+
+// ==================== SHOW REGISTER FORM ====================
+if (showRegisterBtn) {
+    showRegisterBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('📝 Register button clicked');
+        if (loginSection) loginSection.style.display = 'none';
+        if (registerSection) registerSection.style.display = 'block';
+    });
+    console.log('✅ Register button listener added');
+} else {
+    console.error('❌ showRegisterBtn not found!');
+}
+
+// ==================== BACK TO LOGIN ====================
+if (backToLoginBtn) {
+    backToLoginBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('⬅ Back to login clicked');
+        if (registerSection) registerSection.style.display = 'none';
+        if (loginSection) loginSection.style.display = 'block';
+    });
 }
 
 // ==================== LOGIN ====================
@@ -104,6 +123,8 @@ if (loginForm) {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
+        console.log('🔐 Login attempt:', username);
+
         // Admin Login
         if (username === 'admin' && password === 'admin123') {
             localStorage.setItem('adminLoggedIn', 'true');
@@ -111,10 +132,10 @@ if (loginForm) {
             return;
         }
 
-        // Check Pre-registered Students (from data.js)
+        // Pre-registered Students
         let student = EXAM_STUDENTS.find(s => s.username === username && s.password === password);
         
-        // Check Approved Students (from Firebase)
+        // Approved Students from Firebase
         if (!student) {
             const approved = APPROVED_STUDENTS.find(s => s.username === username && s.password === password);
             if (approved) {
@@ -134,40 +155,26 @@ if (loginForm) {
                 console.log('Using cached test');
             }
             
-            loginSection.style.display = 'none';
-            registerSection.style.display = 'none';
-            instructionsSection.style.display = 'block';
-            loginError.style.display = 'none';
+            if (loginSection) loginSection.style.display = 'none';
+            if (registerSection) registerSection.style.display = 'none';
+            if (instructionsSection) instructionsSection.style.display = 'block';
+            if (loginError) loginError.style.display = 'none';
             
             const welcomeMsg = document.getElementById('welcomeMessage');
             if (welcomeMsg) welcomeMsg.textContent = `Welcome, ${student.name}!`;
             
             updateInstructionsWithTestInfo();
+            console.log('✅ Login successful:', student.name);
         } else {
-            loginError.textContent = 'Invalid username or password. Please try again.';
-            loginError.style.display = 'block';
+            if (loginError) {
+                loginError.textContent = 'Invalid username or password. Please try again.';
+                loginError.style.display = 'block';
+            }
         }
     });
 }
 
-// ==================== SHOW REGISTER FORM ====================
-const showRegisterBtn = document.getElementById('showRegisterBtn');
-if (showRegisterBtn) {
-    showRegisterBtn.addEventListener('click', () => {
-        loginSection.style.display = 'none';
-        registerSection.style.display = 'block';
-    });
-}
-
-const backToLoginBtn = document.getElementById('backToLoginBtn');
-if (backToLoginBtn) {
-    backToLoginBtn.addEventListener('click', () => {
-        registerSection.style.display = 'none';
-        loginSection.style.display = 'block';
-    });
-}
-
-// ==================== REGISTER FORM SUBMIT ====================
+// ==================== REGISTER FORM ====================
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -177,16 +184,10 @@ if (registerForm) {
         const phone = document.getElementById('regPhone').value.trim();
         const tid = document.getElementById('regTid').value.trim();
         
-        // Validation
+        console.log('📝 Registration:', studentName);
+        
         if (!studentName || !fatherName || !phone || !tid) {
             registerError.textContent = 'Please fill all fields!';
-            registerError.style.display = 'block';
-            return;
-        }
-        
-        // Phone validation (11 digits)
-        if (!/^03\d{9}$/.test(phone)) {
-            registerError.textContent = 'Please enter valid phone number (03XXXXXXXXX)';
             registerError.style.display = 'block';
             return;
         }
@@ -196,7 +197,6 @@ if (registerForm) {
             btn.textContent = '⏳ Submitting...';
             btn.disabled = true;
             
-            // Save to Firebase
             await addDoc(collection(db, 'registration-requests'), {
                 name: studentName,
                 fatherName: fatherName,
@@ -209,11 +209,11 @@ if (registerForm) {
                 submittedTimestamp: serverTimestamp()
             });
             
-            alert(`✅ Registration Request Submitted!\n\nName: ${studentName}\nFee: Rs. ${COLLEGE_INFO.examFee}\nJazzCash: ${COLLEGE_INFO.jazzCash}\nTID: ${tid}\n\nPlease wait for admin approval.\nYou will be able to login after approval.`);
+            alert(`✅ Registration Submitted!\n\nName: ${studentName}\nFee: Rs. ${COLLEGE_INFO.examFee}\nJazzCash: ${COLLEGE_INFO.jazzCash}\nTID: ${tid}\n\nPlease wait for admin approval.`);
             
             registerForm.reset();
-            registerSection.style.display = 'none';
-            loginSection.style.display = 'block';
+            if (registerSection) registerSection.style.display = 'none';
+            if (loginSection) loginSection.style.display = 'block';
             
         } catch (error) {
             console.error('Error:', error);
@@ -362,10 +362,7 @@ async function submitExam() {
         examDate: new Date().toLocaleDateString(),
         timeTaken: timeTaken,
         submittedAt: new Date().toISOString(),
-        college: COLLEGE_INFO.name,
-        collegeShortName: COLLEGE_INFO.shortName,
-        location: COLLEGE_INFO.location,
-        session: COLLEGE_INFO.currentSession
+        college: COLLEGE_INFO.name
     };
 
     localStorage.setItem('examResult', JSON.stringify(resultData));
@@ -461,7 +458,6 @@ if (window.location.pathname.includes('dashboard.html')) {
         window.location.href = '../index.html';
     });
 
-    // SWITCH TEST
     document.getElementById('updateTestBtn')?.addEventListener('click', async () => {
         const select = document.getElementById('activeTestSelect');
         const testId = select.value;
@@ -475,10 +471,10 @@ if (window.location.pathname.includes('dashboard.html')) {
             const success = await setActiveTestInFirebase(testId);
             
             if (success) {
-                alert(`✅ Test Switched Successfully!\n\nActive Test: "${testName}"`);
+                alert(`✅ Test Switched!\n\nActive Test: "${testName}"`);
                 window.location.reload();
             } else {
-                alert('❌ Error switching test.');
+                alert('❌ Error');
                 btn.textContent = '🔄 Switch Test';
                 btn.disabled = false;
             }
@@ -510,8 +506,6 @@ function loadTestManagement() {
         const currentActive = getCurrentTestId();
         const test = ALL_TESTS[currentActive];
         statusEl.textContent = `✅ ${test.name} Active`;
-        statusEl.style.background = '#d4edda';
-        statusEl.style.color = '#155724';
     }
 }
 
@@ -571,12 +565,10 @@ async function loadAdminResults() {
         
         const countMsg = document.getElementById('resultCount');
         if (countMsg) {
-            const total = allFirebaseResults.length;
-            const filtered = filteredResults.length;
-            countMsg.innerHTML = `📊 Total Results: <strong>${filtered}</strong> ${filtered !== total ? `(filtered from ${total})` : ''}`;
+            countMsg.innerHTML = `📊 Total Results: <strong>${filteredResults.length}</strong>`;
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="9">Error loading results</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9">Error</td></tr>';
         console.error(error);
     }
 }
@@ -629,17 +621,15 @@ function filterByTest() {
 function sortResults() {
     const sortType = document.getElementById('sortSelect').value;
     let sorted = [...allResults];
-
     switch(sortType) {
         case 'highest': sorted.sort((a, b) => (b.score || 0) - (a.score || 0)); break;
         case 'lowest': sorted.sort((a, b) => (a.score || 0) - (b.score || 0)); break;
         case 'latest': sorted.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)); break;
     }
-
     displayResults(sorted);
 }
 
-// ==================== LOAD REGISTRATION REQUESTS ====================
+// ==================== REGISTRATION REQUESTS ====================
 async function loadRegistrationRequests() {
     const tbody = document.getElementById('registrationsBody');
     if (!tbody) return;
@@ -661,7 +651,7 @@ async function loadRegistrationRequests() {
             countMsg.innerHTML = `📋 Total Requests: <strong>${allRegistrations.length}</strong> | Pending: <strong style="color:#dc3545;">${pending}</strong>`;
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="7">Error loading</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">Error</td></tr>';
         console.error(error);
     }
 }
@@ -674,8 +664,9 @@ function displayRegistrations(registrations) {
     }
 
     tbody.innerHTML = registrations.map((reg, index) => {
-        const statusColor = reg.status === 'approved' ? 'status-pass' : reg.status === 'rejected' ? 'status-fail' : '';
-        const statusStyle = reg.status === 'pending' ? 'background:#fff3cd; color:#856404; padding:4px 12px; border-radius:20px; font-weight:600;' : '';
+        const statusStyle = reg.status === 'pending' ? 'background:#fff3cd; color:#856404; padding:4px 12px; border-radius:20px; font-weight:600;' : 
+                            reg.status === 'approved' ? 'background:#d4edda; color:#155724; padding:4px 12px; border-radius:20px; font-weight:600;' :
+                            'background:#f8d7da; color:#721c24; padding:4px 12px; border-radius:20px; font-weight:600;';
         
         return `
             <tr>
@@ -684,11 +675,11 @@ function displayRegistrations(registrations) {
                 <td>${reg.fatherName || 'N/A'}</td>
                 <td>${reg.phone || 'N/A'}</td>
                 <td>${reg.tid || 'N/A'}</td>
-                <td><span class="${statusColor}" style="${statusStyle}">${reg.status || 'pending'}</span></td>
+                <td><span style="${statusStyle}">${reg.status || 'pending'}</span></td>
                 <td>
                     ${reg.status === 'pending' ? `
-                        <button class="btn btn-success" style="padding:6px 12px; font-size:0.8rem; width:auto;" onclick="approveStudent('${reg.id}')">✅ Approve</button>
-                        <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem; width:auto; background:#dc3545;" onclick="rejectStudent('${reg.id}')">❌ Reject</button>
+                        <button onclick="approveStudent('${reg.id}')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">✅ Approve</button>
+                        <button onclick="rejectStudent('${reg.id}')" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">❌ Reject</button>
                     ` : `
                         <span style="color:#6c757d; font-size:0.8rem;">${reg.status === 'approved' ? 'Approved ✅' : 'Rejected ❌'}</span>
                     `}
@@ -698,20 +689,17 @@ function displayRegistrations(registrations) {
     }).join('');
 }
 
-// ==================== APPROVE STUDENT ====================
 window.approveStudent = async function(regId) {
-    if (!confirm('Approve this student? They will be able to login.')) return;
+    if (!confirm('Approve this student?')) return;
     
     try {
         const reg = allRegistrations.find(r => r.id === regId);
         if (!reg) return;
         
-        // Generate username and password
         const existingCount = APPROVED_STUDENTS.length;
         const username = `student${101 + existingCount}`;
         const password = `${101 + existingCount}`;
         
-        // Add to approved-students collection
         await addDoc(collection(db, 'approved-students'), {
             name: reg.name,
             fatherName: reg.fatherName,
@@ -723,7 +711,6 @@ window.approveStudent = async function(regId) {
             approvedTimestamp: serverTimestamp()
         });
         
-        // Update registration request status
         const regRef = doc(db, 'registration-requests', regId);
         await updateDoc(regRef, {
             status: 'approved',
@@ -732,18 +719,17 @@ window.approveStudent = async function(regId) {
             assignedPassword: password
         });
         
-        alert(`✅ Student Approved!\n\nName: ${reg.name}\nUsername: ${username}\nPassword: ${password}\n\nShare these credentials with the student.`);
+        alert(`✅ Student Approved!\n\nName: ${reg.name}\nUsername: ${username}\nPassword: ${password}\n\nShare these credentials with student.`);
         
         await loadApprovedStudents();
         await loadRegistrationRequests();
         
     } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error approving student');
+        alert('❌ Error');
     }
 };
 
-// ==================== REJECT STUDENT ====================
 window.rejectStudent = async function(regId) {
     if (!confirm('Reject this registration?')) return;
     
@@ -754,12 +740,12 @@ window.rejectStudent = async function(regId) {
             rejectedAt: new Date().toISOString()
         });
         
-        alert('❌ Registration Rejected');
+        alert('❌ Rejected');
         await loadRegistrationRequests();
         
     } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error rejecting');
+        alert('❌ Error');
     }
 };
 
