@@ -735,7 +735,7 @@ export const ALL_TESTS = {
     test6: { id: 'test6', name: 'Ideology & Constitution of Pakistan', description: '35 MCQs', totalQuestions: 35, timeLimit: 60, passingScore: 50, questions: TEST6_QUESTIONS } ,
         test7: { 
         id: 'test7', 
-        name: 'Fundamentals of Nursing – I (Answer Key Q1–Q70)', 
+        name: 'Fundamentals of Nursing – I (26/6/26 pumhs past)', 
         description: '70 MCQs | Date: 26/6/26', 
         totalQuestions: 70, 
         timeLimit: 90, 
